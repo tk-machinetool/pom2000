@@ -1,4 +1,5 @@
 import { isCampaignActive, isOfferAvailable, passesFilters } from './availability'
+import { isPracticalFixedAddition, isPracticalPresetOffer, mainOrStapleUnits, practicalAdditionLinesAreValid, practicalBasketLinesAreValid, recommendationRoleOf } from './recommendation'
 import type { Basket, BasketLine, FixedQuantities, MenuData, MenuOffer, Preset, SearchOptions } from './types'
 
 const MAIN_CATEGORIES = new Set(['omurice', 'pasta', 'doria', 'bundle'])
@@ -23,7 +24,10 @@ function basketMatchesPreset(lines: BasketLine[], preset: Preset): boolean {
     if (offer.containsOmurice) omuriceMainUnits += quantity
   }
 
-  if (preset === 'solo') return mainUnits === 1 && omuriceMainUnits === 1
+  if (preset === 'solo' || preset === 'light') return mainUnits === 1
+    && omuriceMainUnits === 1
+    && countedUnits(lines) <= 3
+    && practicalBasketLinesAreValid(lines)
   return mainUnits === 2 && omuriceMainUnits >= 1
 }
 
@@ -118,6 +122,15 @@ export function compareBaskets(a: Basket, b: Basket): number {
   return a.key.localeCompare(b.key, 'en')
 }
 
+export function compareLightBaskets(a: Basket, b: Basket): number {
+  return mainOrStapleUnits(a.lines) - mainOrStapleUnits(b.lines)
+    || a.overage - b.overage
+    || omuriceSizeBurden(a.lines) - omuriceSizeBurden(b.lines)
+    || a.unitCount - b.unitCount
+    || a.duplicateUnits - b.duplicateUnits
+    || a.key.localeCompare(b.key, 'en')
+}
+
 export function compareFixedBaskets(a: Basket, b: Basket): number {
   return a.overage - b.overage
     || (a.additionalUnitCount ?? a.unitCount) - (b.additionalUnitCount ?? b.unitCount)
@@ -155,14 +168,22 @@ function generatePartials(offers: MenuOffer[], maxQuantity: number, maxUnits: nu
 export function optimize(data: MenuData, options: SearchOptions, now: Date): Basket[] {
   if (!isCampaignActive(now, data.campaignRule)) return []
 
-  const offers = availableOffers(data, options, now)
+  const practicalPreset = options.preset === 'solo' || options.preset === 'light'
+  const available = availableOffers(data, options, now)
+  const offers = practicalPreset ? available.filter(isPracticalPresetOffer) : available
   const maxQuantity = options.maxQuantityPerOffer ?? 2
-  const maxUnits = options.maxTotalUnits ?? 4
-  const baskets = generatePartials(offers, maxQuantity, maxUnits)
+  const requestedMaxUnits = options.maxTotalUnits ?? 4
+  const maxUnits = practicalPreset ? Math.min(requestedMaxUnits, 3) : requestedMaxUnits
+  const baskets = generatePartials(
+    offers,
+    maxQuantity,
+    maxUnits,
+    (offer) => options.preset === 'light' && recommendationRoleOf(offer) !== 'main' ? 1 : maxQuantity,
+  )
     .filter((partial) => partial.lines.length > 0 && basketIsEligible(partial.lines, partial.total, data.targetYen, options.preset))
     .map((partial) => basketFromPartial(partial, data.targetYen))
 
-  return baskets.sort(compareBaskets).slice(0, options.limit ?? 20)
+  return baskets.sort(options.preset === 'light' ? compareLightBaskets : compareBaskets).slice(0, options.limit ?? 20)
 }
 
 export function selectableOffers(data: MenuData, filters: SearchOptions['filters'], now: Date): MenuOffer[] {
@@ -206,20 +227,27 @@ export function optimizeWithFixed(
   if (fixedUnits > maxUnits) return []
 
   const fixedTotal = fixedLines.reduce((sum, { offer, quantity }) => sum + offer.price * quantity, 0)
+  const practicalPreset = options.preset === 'solo' || options.preset === 'light'
+  const fixedHasOmurice = fixedLines.some(({ offer }) => offer.containsOmurice)
   const additionOffers = [...availableOffers(data, { ...options, preset: 'price' }, now), ...supplementalOffers]
     .filter((offer) => !offer.requiresCategory)
     .filter((offer, index, all) => all.findIndex((candidate) => candidate.id === offer.id) === index)
+    .filter((offer) => !practicalPreset || isPracticalFixedAddition(offer, fixedHasOmurice))
     .toSorted((left, right) => left.id.localeCompare(right.id, 'en'))
   const remainingUnits = maxUnits - fixedUnits
   const additions = generatePartials(
     additionOffers,
     maxQuantity,
-    remainingUnits,
-    (offer) => maxQuantity - (fixedQuantities[offer.id] ?? 0),
+    practicalPreset ? Math.min(remainingUnits, 2) : remainingUnits,
+    (offer) => {
+      const remainingQuantity = maxQuantity - (fixedQuantities[offer.id] ?? 0)
+      return options.preset === 'light' ? Math.min(1, remainingQuantity) : remainingQuantity
+    },
   )
   const baskets: Basket[] = []
 
   for (const addition of additions) {
+    if (practicalPreset && !practicalAdditionLinesAreValid(addition.lines, fixedLines)) continue
     const quantities = new Map(fixedLines.map(({ offer, quantity }) => [offer.id, quantity]))
     for (const { offer, quantity } of addition.lines) quantities.set(offer.id, (quantities.get(offer.id) ?? 0) + quantity)
     const lines = Array.from(quantities, ([id, quantity]) => ({ offer: selectableById.get(id) ?? additionOffers.find((candidate) => candidate.id === id)!, quantity }))
@@ -239,5 +267,5 @@ export function optimizeWithFixed(
     })
   }
 
-  return baskets.sort(compareFixedBaskets).slice(0, options.limit ?? 20)
+  return baskets.sort(options.preset === 'light' ? compareLightBaskets : compareFixedBaskets).slice(0, options.limit ?? 20)
 }

@@ -105,8 +105,9 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
     fireEvent.change(search, { target: { value: 'うじゃうじゃ' } })
     fireEvent.click(screen.getByRole('button', { name: 'うじゃうじゃウインナーを選択' }))
-    expect(screen.getByText('参考価格上、この注文だけで2,000円以上')).toBeVisible()
-    expect(screen.getByText('追加注文なしの参考候補です')).toBeVisible()
+    expect(screen.getByRole('heading', { name: '追加注文は不要です' })).toBeVisible()
+    expect(screen.getByText('選択中の商品だけで参考価格上2,000円以上です。')).toBeVisible()
+    expect(screen.queryByRole('heading', { name: '最小追加のおすすめ' })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'うじゃうじゃウインナーを解除' }))
     expect(screen.queryByRole('button', { name: 'うじゃうじゃウインナーを解除' })).not.toBeInTheDocument()
@@ -137,10 +138,10 @@ describe('App', () => {
     fireEvent.change(screen.getByRole('searchbox', { name: '商品名検索' }), { target: { value: '海鮮あん' } })
     fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
 
-    const result = screen.getByRole('region', { name: '最小追加のおすすめ' })
+    const result = screen.getByRole('region', { name: '追加注文は不要です' })
     expect(within(result).getByText('予想合計')).toBeVisible()
     expect(within(result).getByText('2,000円')).toBeVisible()
-    expect(within(result).getByText('超過見込み +0円')).toBeVisible()
+    expect(within(result).getByText('2,000円との差：+0円')).toBeVisible()
     expect(within(result).getByText('仮価格を含む参考結果です。')).toBeVisible()
     expect(result).not.toHaveTextContent('条件達成')
   })
@@ -251,5 +252,40 @@ describe('App', () => {
 
     expect(screen.getByRole('heading', { name: '最小追加のおすすめ' })).toBeVisible()
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' })
+  })
+
+  it('selects the light preset with its non-quantitative explanation', () => {
+    render(<App />)
+    const light = screen.getByRole('radio', { name: /軽めに2,000円/ })
+    fireEvent.click(light)
+
+    expect(light).toHaveAttribute('aria-checked', 'true')
+    expect(light).toHaveTextContent('SSサイズ・品数少なめ・主食の追加を抑えた参考候補')
+    expect(screen.getByRole('region', { name: /軽めに2,000円/ })).toBeVisible()
+  })
+
+  it('shows no-addition guidance and the exact overage for a 2,662 yen fixed order', () => {
+    render(<App />)
+    fireEvent.change(screen.getByRole('searchbox', { name: '商品名検索' }), { target: { value: 'チキンとキノコのトマト' } })
+    fireEvent.change(screen.getByRole('combobox', { name: 'チキンとキノコのトマトソースオムライスのサイズ' }), {
+      target: { value: 'ref_chicken_mushroom_tomato_l' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'チキンとキノコのトマトソースオムライス Lを選択' }))
+
+    const result = screen.getByRole('region', { name: '追加注文は不要です' })
+    expect(within(result).getByText('選択中の商品だけで参考価格上2,000円以上です。')).toBeVisible()
+    expect(within(result).getAllByText('2,662円')).toHaveLength(2)
+    expect(within(result).getByText('2,000円との差：+662円')).toBeVisible()
+    expect(within(result).getByText('2,000円に近づけたい場合は、選択中の商品を1品解除してください。')).toBeVisible()
+    expect(screen.queryByRole('heading', { name: '最小追加のおすすめ' })).not.toBeInTheDocument()
+  })
+
+  it('does not call a 201+ yen practical result the minimum-addition recommendation', () => {
+    render(<App />)
+    fireEvent.change(screen.getByRole('spinbutton', { name: '仮ドリンクの税込参考価格' }), { target: { value: '9999' } })
+    fireEvent.click(screen.getByRole('button', { name: '仮ドリンクを追加' }))
+
+    expect(screen.getByRole('heading', { name: '2,000円に近い実用的な組み合わせが見つかりません' })).toBeVisible()
+    expect(screen.queryByRole('heading', { name: '最小追加のおすすめ' })).not.toBeInTheDocument()
   })
 })

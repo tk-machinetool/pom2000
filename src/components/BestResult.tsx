@@ -1,18 +1,23 @@
 import { basketHasHypotheticalPrice, basketHasStoreReferencePrice, basketTotalLabel, formatYen, priceBasisLabel, priceBasisOf } from '../domain/format'
-import type { Basket, MenuSource } from '../domain/types'
+import { practicalRecommendationLabel } from '../domain/recommendation'
+import type { Basket, MenuSource, Preset } from '../domain/types'
 import { SourceDetails } from './SourceDetails'
 
 interface BestResultProps {
   basket: Basket
+  preset: Preset
   presetLabel: string
   sources: Record<string, MenuSource>
   asOf: string
 }
 
-export function BestResult({ basket, presetLabel, sources, asOf }: BestResultProps) {
+export function BestResult({ basket, preset, presetLabel, sources, asOf }: BestResultProps) {
+  const heading = preset === 'solo' || preset === 'light'
+    ? `${practicalRecommendationLabel(basket.overage)}（${presetLabel}）`
+    : `ベストな組み合わせ（${presetLabel}）`
   return (
     <section className="best-result" aria-labelledby="best-result-heading">
-      <div className="best-label" id="best-result-heading">ベストな組み合わせ（{presetLabel}）</div>
+      <div className="best-label" id="best-result-heading">{heading}</div>
       <div className="best-totals">
         <div>
           <span>{basketTotalLabel(basket)}</span>

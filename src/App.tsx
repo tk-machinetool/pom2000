@@ -4,6 +4,7 @@ import { AdvancedFilters } from './components/AdvancedFilters'
 import { BestResult } from './components/BestResult'
 import { DataTrustNotice } from './components/DataTrustNotice'
 import { FixedRecommendation } from './components/FixedRecommendation'
+import { FixedOrderComplete } from './components/FixedOrderComplete'
 import { FixedResultList } from './components/FixedResultList'
 import { PresetSelector } from './components/PresetSelector'
 import { ProductFinder } from './components/ProductFinder'
@@ -24,7 +25,7 @@ const DEFAULT_FILTERS: SearchFilters = {
   includeS: true,
 }
 
-const PRESET_LABELS: Record<Preset, string> = { solo: '1人向け', pair: '2人向け', price: '金額最優先' }
+const PRESET_LABELS: Record<Preset, string> = { solo: '1人向け', pair: '2人向け', light: '軽めに2,000円', price: '金額最優先' }
 
 function App() {
   const [preset, setPreset] = useState<Preset>('solo')
@@ -59,10 +60,11 @@ function App() {
   const selectedTotal = selectedLines.reduce((sum, { offer, quantity }) => sum + offer!.price * quantity, 0)
   const selectedHasOmurice = selectedLines.some(({ offer }) => offer!.containsOmurice)
   const selectedHasHypotheticalPrice = selectedLines.some(({ offer }) => priceBasisOf(offer!) === 'hypothetical')
+  const fixedOrderNeedsNoAddition = selectedTotal >= data.targetYen && selectedHasOmurice
   const fixedBaskets = useMemo(
     () => optimizeWithFixed(
       data,
-      { preset: 'price', filters, maxQuantityPerOffer: 2, maxTotalUnits: 4, limit: 20 },
+      { preset: 'solo', filters, maxQuantityPerOffer: 2, maxTotalUnits: 4, limit: 20 },
       now,
       effectiveFixedQuantities,
       [
@@ -139,7 +141,7 @@ function App() {
                   {selectedTotal < data.targetYen ? (
                     <p>2,000円まであと{selectedHasHypotheticalPrice ? '（見込み）' : ''} <strong>{data.targetYen - selectedTotal}円</strong></p>
                   ) : selectedHasOmurice ? (
-                    <p className={selectedHasHypotheticalPrice ? 'estimate' : 'achieved'}>{selectedHasHypotheticalPrice ? '仮価格上、2,000円以上の見込み' : '参考価格上、この注文だけで2,000円以上'}</p>
+                    <p className={selectedHasHypotheticalPrice ? 'estimate' : 'achieved'}>{selectedHasHypotheticalPrice ? '仮価格上、2,000円以上の見込み' : '参考価格上、2,000円以上'}</p>
                   ) : (
                     <p>{selectedHasHypotheticalPrice ? '仮価格上、2,000円以上の見込みです' : '参考価格上、2,000円以上です'}</p>
                   )}
@@ -147,7 +149,14 @@ function App() {
                     <div className="omurice-required">この商品だけではキャンペーン条件を満たしません。<br />オムライスを含む組み合わせを探します。</div>
                   ) : null}
                 </section>
-                {fixedBaskets[0] ? (
+                {fixedOrderNeedsNoAddition ? (
+                  <FixedOrderComplete
+                    lines={selectedLines.map(({ offer, quantity }) => ({ offer: offer!, quantity }))}
+                    targetYen={data.targetYen}
+                    sources={data.sources}
+                    asOf={data.asOf}
+                  />
+                ) : fixedBaskets[0] ? (
                   <>
                     <FixedRecommendation basket={fixedBaskets[0]} fixedQuantities={effectiveFixedQuantities} sources={data.sources} asOf={data.asOf} />
                     <FixedResultList key={JSON.stringify(effectiveFixedQuantities)} baskets={fixedBaskets} fixedQuantities={effectiveFixedQuantities} sources={data.sources} asOf={data.asOf} />
@@ -169,7 +178,7 @@ function App() {
               <PresetSelector value={preset} onChange={setPreset} />
               {baskets[0] ? (
                 <>
-                  <BestResult basket={baskets[0]} presetLabel={PRESET_LABELS[preset]} sources={data.sources} asOf={data.asOf} />
+                  <BestResult basket={baskets[0]} preset={preset} presetLabel={PRESET_LABELS[preset]} sources={data.sources} asOf={data.asOf} />
                   <ResultList key={`${preset}-${JSON.stringify(filters)}`} baskets={baskets} sources={data.sources} asOf={data.asOf} />
                 </>
               ) : (

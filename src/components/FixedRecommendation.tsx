@@ -1,4 +1,5 @@
 import { basketHasHypotheticalPrice, basketHasStoreReferencePrice, basketOverageLabel, basketTotalLabel, formatYen, priceBasisLabel, priceBasisOf } from '../domain/format'
+import { practicalRecommendationLabel } from '../domain/recommendation'
 import type { Basket, FixedQuantities, MenuSource } from '../domain/types'
 import { SourceDetails } from './SourceDetails'
 
@@ -14,7 +15,7 @@ export function FixedRecommendation({ basket, fixedQuantities, sources, asOf }: 
   const hasStoreReferencePrice = basketHasStoreReferencePrice(basket)
   return (
     <section className="fixed-best" aria-labelledby="fixed-best-heading">
-      <h3 id="fixed-best-heading">最小追加のおすすめ</h3>
+      <h3 id="fixed-best-heading">{practicalRecommendationLabel(basket.overage)}</h3>
       {basket.additionalUnitCount === 0 ? <p className="no-addition">{hasHypotheticalPrice ? '追加注文なしで2,000円以上の見込みです' : '追加注文なしの参考候補です'}</p> : null}
       <ul className="fixed-best-lines" aria-label="おすすめの注文内容">
         {basket.lines.map(({ offer, quantity }) => {

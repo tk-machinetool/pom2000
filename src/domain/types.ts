@@ -1,7 +1,8 @@
 export type MenuCategory = 'omurice' | 'pasta' | 'doria' | 'side' | 'dessert' | 'bundle' | string
 export type OfferStatus = 'official-current' | 'official-future' | 'reference-current' | string
-export type Preset = 'solo' | 'pair' | 'price'
+export type Preset = 'solo' | 'pair' | 'light' | 'price'
 export type PriceBasis = 'official-reference' | 'store-reference' | 'hypothetical' | 'store-entered'
+export type RecommendationRole = 'main' | 'drink' | 'side' | 'dessert' | 'light-addon' | 'staple' | 'other'
 
 export interface MenuSource {
   title: string

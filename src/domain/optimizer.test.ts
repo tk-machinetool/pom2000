@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest'
+import rawData from '../../handoff/menu-data.json'
+import { mergeMenuData } from './menuMerge'
 import { optimize, optimizeWithFixed, searchOffers, selectableOffers } from './optimizer'
 import { createHypotheticalDrinkOffer, SIMULATION_DRINK_ID } from './simulation'
 import { createFloatModifierOffer, FLOAT_MODIFIER_ID } from './simulation'
 import { activeNow, customData, data, filters, offer, soloOptions } from '../test/fixtures'
-import type { SearchOptions } from './types'
+import type { MenuData, SearchOptions } from './types'
+
+const mergedData = mergeMenuData(rawData as MenuData)
 
 describe('optimizer eligibility and ranking', () => {
   it('never returns below 2,000 yen or baskets without omurice', () => {
@@ -100,6 +104,98 @@ describe('optimizer eligibility and ranking', () => {
     expect(off.every((basket) => basket.lines.every(({ offer: item }) => item.menuContext !== 'lunch'))).toBe(true)
     expect(on.some((basket) => basket.lines.some(({ offer: item }) => item.menuContext === 'lunch'))).toBe(true)
   })
+
+  it('keeps staple-heavy exact totals below practical solo candidates', () => {
+    const omurice = offer({ id: 'omu', price: 1200, category: 'omurice', containsOmurice: true, size: 'SS' })
+    const rice = offer({ id: 'ref_rice_single', name: '単品ライス', price: 400, category: 'other' })
+    const side = offer({ id: 'side', price: 820, category: 'side' })
+    const results = optimize(customData([omurice, rice, side]), soloOptions, activeNow)
+
+    expect(results[0].key).toBe('omu:1|side:1')
+    expect(results[0].total).toBe(2020)
+    expect(results.every((basket) => !basket.key.includes('ref_rice_single'))).toBe(true)
+  })
+
+  it('does not auto-add another omurice, pasta, or doria in solo', () => {
+    const omurice = offer({ id: 'omu', price: 1300, category: 'omurice', containsOmurice: true, size: 'SS' })
+    const otherOmurice = offer({ id: 'other-omu', price: 700, category: 'omurice', containsOmurice: true, size: 'SS' })
+    const pasta = offer({ id: 'pasta', price: 700, category: 'pasta' })
+    const doria = offer({ id: 'doria', price: 700, category: 'doria' })
+    const drink = offer({ id: 'drink', price: 700, category: 'drink' })
+    const results = optimize(customData([omurice, otherOmurice, pasta, doria, drink]), soloOptions, activeNow)
+
+    expect(results[0].key).toBe('drink:1|omu:1')
+    expect(results.every((basket) => !basket.key.includes('pasta') && !basket.key.includes('doria'))).toBe(true)
+    expect(results.every((basket) => basket.lines.filter(({ offer: item }) => item.containsOmurice).reduce((sum, line) => sum + line.quantity, 0) === 1)).toBe(true)
+  })
+
+  it('allows drinks, sides, and desserts as practical solo additions', () => {
+    for (const category of ['drink', 'side', 'dessert'] as const) {
+      const omurice = offer({ id: `omu-${category}`, price: 1300, category: 'omurice', containsOmurice: true, size: 'SS' })
+      const addon = offer({ id: `addon-${category}`, price: 700, category })
+      const [best] = optimize(customData([omurice, addon]), soloOptions, activeNow)
+      expect(best.key).toContain(`addon-${category}:1`)
+    }
+  })
+
+  it('keeps the existing pair representative result unchanged', () => {
+    const [best] = optimize(mergedData, { ...soloOptions, preset: 'pair' }, activeNow)
+    expect(best.key).toBe('ref_classic_bacon_ss:2')
+    expect(best.total).toBe(2090)
+    expect(best.overage).toBe(90)
+  })
+
+  it('keeps mathematical minimum-overage behavior in price mode', () => {
+    const omurice = offer({ id: 'omu', price: 1200, category: 'omurice', containsOmurice: true, size: 'SS' })
+    const rice = offer({ id: 'ref_rice_single', name: '単品ライス', price: 400, category: 'other' })
+    const side = offer({ id: 'side', price: 820, category: 'side' })
+    const [best] = optimize(customData([omurice, rice, side]), { ...soloOptions, preset: 'price' }, activeNow)
+
+    expect(best.key).toBe('omu:1|ref_rice_single:2')
+    expect(best.overage).toBe(0)
+  })
+
+  it('prefers a one-item 2,090 yen omurice over a staple-heavy 2,002 yen light candidate', () => {
+    const expensive = offer({ id: 'expensive', price: 2090, category: 'omurice', containsOmurice: true, size: 'SS' })
+    const cheap = offer({ id: 'cheap', price: 1300, category: 'omurice', containsOmurice: true, size: 'SS' })
+    const rice = offer({ id: 'ref_rice_single', name: '単品ライス', price: 351, category: 'other' })
+    const [best] = optimize(customData([expensive, cheap, rice]), { ...soloOptions, preset: 'light' }, activeNow)
+
+    expect(best.key).toBe('expensive:1')
+    expect(best.overage).toBe(90)
+  })
+
+  it('prefers SS over larger omurice sizes when light candidates otherwise tie', () => {
+    const sizeS = offer({ id: 'size-s', price: 2090, category: 'omurice', containsOmurice: true, size: 'S' })
+    const sizeL = offer({ id: 'size-l', price: 2090, category: 'omurice', containsOmurice: true, size: 'L' })
+    const sizeSS = offer({ id: 'size-ss', price: 2090, category: 'omurice', containsOmurice: true, size: 'SS' })
+    const results = optimize(customData([sizeS, sizeL, sizeSS]), { ...soloOptions, preset: 'light' }, activeNow)
+
+    expect(results[0].key).toBe('size-ss:1')
+  })
+
+  it('keeps pasta and doria out while allowing drink and dessert additions in light mode', () => {
+    for (const addonCategory of ['drink', 'dessert'] as const) {
+      const omurice = offer({ id: `omu-${addonCategory}`, price: 1300, category: 'omurice', containsOmurice: true, size: 'SS' })
+      const addon = offer({ id: `addon-${addonCategory}`, price: 700, category: addonCategory })
+      const pasta = offer({ id: `pasta-${addonCategory}`, price: 700, category: 'pasta' })
+      const doria = offer({ id: `doria-${addonCategory}`, price: 700, category: 'doria' })
+      const results = optimize(customData([omurice, addon, pasta, doria]), { ...soloOptions, preset: 'light', filters: { ...filters, includePasta: true } }, activeNow)
+
+      expect(results[0].key).toContain(`addon-${addonCategory}:1`)
+      expect(results.every((basket) => !basket.key.includes('pasta-') && !basket.key.includes('doria-'))).toBe(true)
+    }
+  })
+
+  it('avoids duplicate automatic add-ons in light mode', () => {
+    const omurice = offer({ id: 'omu', price: 1300, category: 'omurice', containsOmurice: true, size: 'SS' })
+    const duplicateSide = offer({ id: 'side', price: 350, category: 'side' })
+    const drink = offer({ id: 'drink', price: 720, category: 'drink' })
+    const results = optimize(customData([omurice, duplicateSide, drink]), { ...soloOptions, preset: 'light' }, activeNow)
+
+    expect(results[0].key).toBe('drink:1|omu:1')
+    expect(results.every((basket) => basket.duplicateUnits === 0)).toBe(true)
+  })
 })
 
 describe('fixed-product optimization', () => {
@@ -187,5 +283,34 @@ describe('fixed-product optimization', () => {
       { [FLOAT_MODIFIER_ID]: 1 },
       [float],
     )).toHaveLength(0)
+  })
+
+  it('keeps a user-fixed staple while restricting automatic solo additions', () => {
+    const omurice = offer({ id: 'omu', price: 1791, category: 'omurice', containsOmurice: true, size: 'SS' })
+    const rice = offer({ id: 'ref_rice_single', name: '単品ライス', price: 209, category: 'other' })
+    const [best] = optimizeWithFixed(
+      customData([omurice, rice]),
+      { ...fixedOptions, preset: 'solo' },
+      activeNow,
+      { ref_rice_single: 1 },
+    )
+
+    expect(best.key).toContain('ref_rice_single:1')
+    expect(best.key).toContain('omu:1')
+    expect(best.total).toBe(2000)
+  })
+
+  it('uses only practical additions for a fixed omurice in solo mode', () => {
+    const results = optimizeWithFixed(
+      mergedData,
+      { ...fixedOptions, preset: 'solo' },
+      activeNow,
+      { grand_kaisen: 1 },
+    )
+
+    expect(results[0].total).toBe(2002)
+    expect(results[0].key).toContain('ref_fried_mix:1')
+    expect(results.every((basket) => !basket.key.includes('ref_rice_single') && !basket.key.includes('ref_bread_single') && !basket.key.includes('ref_stone_bread'))).toBe(true)
+    expect(results.every((basket) => (basket.additionalUnitCount ?? 0) <= 2)).toBe(true)
   })
 })
