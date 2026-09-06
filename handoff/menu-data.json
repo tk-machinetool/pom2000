@@ -1,0 +1,790 @@
+{
+  "schemaVersion": "0.4",
+  "asOf": "2026-09-05",
+  "targetYen": 2000,
+  "campaignRule": {
+    "targetYen": 2000,
+    "restaurantCondition": "オムライスを含む、税込2,000円以上のお食事",
+    "startsAtJST": "2026-09-04T00:00:00+09:00",
+    "endsAtJST": "2026-10-16T12:00:00+09:00",
+    "proof": "応募フォームに対象レシート等の画像添付が必要。詳細は必ず公式キャンペーン情報を確認する。",
+    "source": "campaign"
+  },
+  "sources": {
+    "grand": {
+      "title": "グランドメニュー改訂のご案内",
+      "publisher": "株式会社ポムフード",
+      "published": "2025-11-05",
+      "effective": "2025-11-11",
+      "url": "https://www.pomunoki.com/img/release/release-276.pdf",
+      "verifiedOn": "2026-09-05"
+    },
+    "lunch": {
+      "title": "ランチメニュー改訂／オムパスタコンビ改訂",
+      "publisher": "株式会社ポムフード",
+      "published": "2026-03-04",
+      "effective": "2026-03-10",
+      "url": "https://www.pomunoki.com/img/release/release-286.pdf",
+      "verifiedOn": "2026-09-05"
+    },
+    "summer": {
+      "title": "夏のチーズフェス／バスクチーズケーキフェア",
+      "publisher": "株式会社ポムフード",
+      "published": "2026-05-28",
+      "effective": "2026-06-01",
+      "url": "https://www.pomunoki.com/img/release/release-293.pdf",
+      "verifiedOn": "2026-09-05"
+    },
+    "autumn": {
+      "title": "秋のオムライスフェア／おいもフェア",
+      "publisher": "株式会社ポムフード",
+      "published": "2026-09-03",
+      "effective": "2026-09-10",
+      "url": "https://www.pomunoki.com/img/release/release-296.pdf",
+      "verifiedOn": "2026-09-05"
+    },
+    "campaign": {
+      "title": "ポムの樹プレミアムオムライスエクスペリエンス イベント開催・参加者募集開始のご案内",
+      "publisher": "株式会社ポムフード",
+      "published": "2026-09-04",
+      "effective": "2026-09-04",
+      "url": "https://www.pomunoki.com/img/release/release-298.pdf",
+      "verifiedOn": "2026-09-05"
+    },
+    "official_menu_page": {
+      "title": "ポムの樹 公式メニューページ",
+      "publisher": "株式会社ポムフード",
+      "url": "https://www.pomunoki.com/pomunoki/",
+      "verifiedOn": "2026-09-05"
+    }
+  },
+  "menu": [
+    {
+      "id": "grand_wafu_aonori",
+      "name": "糸青のりとキノコの和風あんかけスープオムライス",
+      "size": "SS",
+      "price": 1485,
+      "category": "omurice",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "grand"
+    },
+    {
+      "id": "grand_wafu_chicken",
+      "name": "チキンとキノコの和風オムライス",
+      "size": "SS",
+      "price": 1430,
+      "category": "omurice",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "grand"
+    },
+    {
+      "id": "grand_kaisen",
+      "name": "海鮮あんかけオムライス",
+      "size": "SS",
+      "price": 1353,
+      "category": "omurice",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "grand"
+    },
+    {
+      "id": "grand_takana",
+      "name": "高菜と明太子の和風スープオムライス",
+      "size": "SS",
+      "price": 1353,
+      "category": "omurice",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "grand"
+    },
+    {
+      "id": "grand_tomato_katsuo",
+      "name": "トマトと鰹節の和風スープオムライス（梅肉添え）",
+      "size": "SS",
+      "price": 1408,
+      "category": "omurice",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "grand"
+    },
+    {
+      "id": "grand_tororo",
+      "name": "和風とろろスープオムライス",
+      "size": "SS",
+      "price": 1111,
+      "category": "omurice",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "grand"
+    },
+    {
+      "id": "grand_premium_gyutan",
+      "name": "プレミアム牛タンシチューオムライス（赤ワイン入り）",
+      "size": "SS",
+      "price": 1980,
+      "category": "omurice",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "grand"
+    },
+    {
+      "id": "grand_premium_beef",
+      "name": "プレミアムビーフシチューオムライス",
+      "size": "SS",
+      "price": 2453,
+      "category": "omurice",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "grand"
+    },
+    {
+      "id": "grand_premium_crab",
+      "name": "プレミアムカニコロッケのハヤシソースオムライス",
+      "size": "SS",
+      "price": 1815,
+      "category": "omurice",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "grand"
+    },
+    {
+      "id": "grand_chicken_tomato",
+      "name": "チキンとキノコのトマトソースオムライス",
+      "size": "SS",
+      "price": 1309,
+      "category": "omurice",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "grand"
+    },
+    {
+      "id": "grand_beef_curry",
+      "name": "ビーフカレーソースオムライス",
+      "size": "SS",
+      "price": 1254,
+      "category": "omurice",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "grand"
+    },
+    {
+      "id": "grand_all_hayashi",
+      "name": "全部のせハヤシソースオムライス",
+      "size": "SS",
+      "price": 3630,
+      "category": "omurice",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "grand"
+    },
+    {
+      "id": "lunch_veg_tomato",
+      "name": "野菜のトマトソースオムライス",
+      "size": "SS",
+      "price": 1089,
+      "category": "omurice",
+      "source": "lunch",
+      "status": "official-current",
+      "scope": "lunch-menu",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "lunch"
+    },
+    {
+      "id": "lunch_basil_cream",
+      "name": "バジルクリームオムライス",
+      "size": "SS",
+      "price": 1089,
+      "category": "omurice",
+      "source": "lunch",
+      "status": "official-current",
+      "scope": "lunch-menu",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "lunch"
+    },
+    {
+      "id": "grand_pasta_chicken",
+      "name": "チキンのトマトソーススパゲティ",
+      "price": 1298,
+      "category": "pasta",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": false,
+      "menuContext": "grand"
+    },
+    {
+      "id": "grand_pasta_carbonara",
+      "name": "カルボナーラ（ポーチドエッグのせ）",
+      "price": 1364,
+      "category": "pasta",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": false,
+      "menuContext": "grand"
+    },
+    {
+      "id": "lunch_pasta_shrimp",
+      "name": "エビとベーコンのオイルスパゲティ",
+      "price": 1089,
+      "category": "pasta",
+      "source": "lunch",
+      "status": "official-current",
+      "scope": "lunch-menu",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": false,
+      "menuContext": "lunch"
+    },
+    {
+      "id": "lunch_pasta_basil",
+      "name": "ベーコンとキノコのバジルオイルスパゲティ",
+      "price": 1408,
+      "category": "pasta",
+      "source": "lunch",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": false,
+      "menuContext": "omupasta"
+    },
+    {
+      "id": "lunch_pasta_beef",
+      "name": "牛すじとブロッコリーのトマトクリームスパゲティ",
+      "price": 1485,
+      "category": "pasta",
+      "source": "lunch",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": false,
+      "menuContext": "omupasta"
+    },
+    {
+      "id": "grand_side_sausage",
+      "name": "うじゃうじゃウインナー",
+      "price": 660,
+      "category": "side",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": false,
+      "menuContext": "grand"
+    },
+    {
+      "id": "grand_side_karaage",
+      "name": "から揚げ（7個）",
+      "price": 715,
+      "category": "side",
+      "source": "grand",
+      "status": "official-current",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": false,
+      "menuContext": "grand"
+    },
+    {
+      "id": "summer_seafood_ss",
+      "name": "シーフード ゴルゴンゾーラトマトソースオムライス",
+      "size": "SS",
+      "price": 1529,
+      "category": "omurice",
+      "source": "summer",
+      "status": "official-current",
+      "fair": "summer",
+      "start": "2026-06-01",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "fair",
+      "reviewAfter": "2026-09-10",
+      "freshnessPolicy": "exclude-after-review-date-until-revalidated"
+    },
+    {
+      "id": "summer_seafood_s",
+      "name": "シーフード ゴルゴンゾーラトマトソースオムライス",
+      "size": "S",
+      "price": 1694,
+      "category": "omurice",
+      "source": "summer",
+      "status": "official-current",
+      "fair": "summer",
+      "start": "2026-06-01",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "fair",
+      "reviewAfter": "2026-09-10",
+      "freshnessPolicy": "exclude-after-review-date-until-revalidated"
+    },
+    {
+      "id": "summer_fish_ss",
+      "name": "白身フライ ゴルゴンゾーラクリームソースオムライス",
+      "size": "SS",
+      "price": 1485,
+      "category": "omurice",
+      "source": "summer",
+      "status": "official-current",
+      "fair": "summer",
+      "start": "2026-06-01",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "fair",
+      "reviewAfter": "2026-09-10",
+      "freshnessPolicy": "exclude-after-review-date-until-revalidated"
+    },
+    {
+      "id": "summer_fish_s",
+      "name": "白身フライ ゴルゴンゾーラクリームソースオムライス",
+      "size": "S",
+      "price": 1650,
+      "category": "omurice",
+      "source": "summer",
+      "status": "official-current",
+      "fair": "summer",
+      "start": "2026-06-01",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "fair",
+      "reviewAfter": "2026-09-10",
+      "freshnessPolicy": "exclude-after-review-date-until-revalidated"
+    },
+    {
+      "id": "summer_parfait_tall",
+      "name": "バスクチーズケーキ トールパフェ",
+      "price": 968,
+      "category": "dessert",
+      "source": "summer",
+      "status": "official-current",
+      "fair": "summer",
+      "start": "2026-06-01",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": false,
+      "menuContext": "fair",
+      "reviewAfter": "2026-09-10",
+      "freshnessPolicy": "exclude-after-review-date-until-revalidated"
+    },
+    {
+      "id": "summer_parfait_mini",
+      "name": "バスクチーズケーキ ミニパフェ",
+      "price": 605,
+      "category": "dessert",
+      "source": "summer",
+      "status": "official-current",
+      "fair": "summer",
+      "start": "2026-06-01",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": false,
+      "menuContext": "fair",
+      "reviewAfter": "2026-09-10",
+      "freshnessPolicy": "exclude-after-review-date-until-revalidated"
+    },
+    {
+      "id": "autumn_porcini_ss",
+      "name": "さつまいものポルチーニソースオムライス",
+      "size": "SS",
+      "price": 1375,
+      "category": "omurice",
+      "source": "autumn",
+      "status": "official-future",
+      "fair": "autumn",
+      "start": "2026-09-10",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "fair"
+    },
+    {
+      "id": "autumn_porcini_s",
+      "name": "さつまいものポルチーニソースオムライス",
+      "size": "S",
+      "price": 1540,
+      "category": "omurice",
+      "source": "autumn",
+      "status": "official-future",
+      "fair": "autumn",
+      "start": "2026-09-10",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "fair"
+    },
+    {
+      "id": "autumn_curry_ss",
+      "name": "さつまいもと茄子のカレーソースオムライス",
+      "size": "SS",
+      "price": 1518,
+      "category": "omurice",
+      "source": "autumn",
+      "status": "official-future",
+      "fair": "autumn",
+      "start": "2026-09-10",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "fair"
+    },
+    {
+      "id": "autumn_curry_s",
+      "name": "さつまいもと茄子のカレーソースオムライス",
+      "size": "S",
+      "price": 1683,
+      "category": "omurice",
+      "source": "autumn",
+      "status": "official-future",
+      "fair": "autumn",
+      "start": "2026-09-10",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": true,
+      "menuContext": "fair"
+    },
+    {
+      "id": "autumn_salad",
+      "name": "りんごとさつまいものミニサラダ（ヨーグルト和え）",
+      "price": 462,
+      "category": "side",
+      "source": "autumn",
+      "status": "official-future",
+      "fair": "autumn",
+      "start": "2026-09-10",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": false,
+      "menuContext": "fair"
+    },
+    {
+      "id": "autumn_parfait_tall",
+      "name": "おいものトールパフェ",
+      "price": 858,
+      "category": "dessert",
+      "source": "autumn",
+      "status": "official-future",
+      "fair": "autumn",
+      "start": "2026-09-10",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": false,
+      "menuContext": "fair"
+    },
+    {
+      "id": "autumn_parfait_mini",
+      "name": "ミニおいもパフェ",
+      "price": 418,
+      "category": "dessert",
+      "source": "autumn",
+      "status": "official-future",
+      "fair": "autumn",
+      "start": "2026-09-10",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "containsOmurice": false,
+      "menuContext": "fair"
+    },
+    {
+      "id": "summer_seafood_set_ss",
+      "name": "シーフード ゴルゴンゾーラトマトソースオムライス 夏フェアセット",
+      "size": "SS",
+      "price": 2299,
+      "category": "bundle",
+      "containsOmurice": true,
+      "source": "summer",
+      "status": "official-current",
+      "fair": "summer",
+      "start": "2026-06-01",
+      "menuContext": "fair",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "reviewAfter": "2026-09-10",
+      "freshnessPolicy": "exclude-after-review-date-until-revalidated",
+      "note": "公式PDFにSSセット税込2,299円と明記。"
+    },
+    {
+      "id": "summer_fish_set_ss",
+      "name": "白身フライ ゴルゴンゾーラクリームソースオムライス 夏フェアセット",
+      "size": "SS",
+      "price": 2255,
+      "category": "bundle",
+      "containsOmurice": true,
+      "source": "summer",
+      "status": "official-current",
+      "fair": "summer",
+      "start": "2026-06-01",
+      "menuContext": "fair",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "reviewAfter": "2026-09-10",
+      "freshnessPolicy": "exclude-after-review-date-until-revalidated",
+      "note": "公式PDFにSSセット税込2,255円と明記。"
+    },
+    {
+      "id": "autumn_porcini_set_ss",
+      "name": "さつまいものポルチーニソースオムライス 秋フェアセット",
+      "size": "SS",
+      "price": 2145,
+      "category": "bundle",
+      "containsOmurice": true,
+      "source": "autumn",
+      "status": "official-future",
+      "fair": "autumn",
+      "start": "2026-09-10",
+      "menuContext": "fair",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "note": "公式PDFにSSセット税込2,145円と明記。"
+    },
+    {
+      "id": "autumn_curry_set_ss",
+      "name": "さつまいもと茄子のカレーソースオムライス 秋フェアセット",
+      "size": "SS",
+      "price": 2288,
+      "category": "bundle",
+      "containsOmurice": true,
+      "source": "autumn",
+      "status": "official-future",
+      "fair": "autumn",
+      "start": "2026-09-10",
+      "menuContext": "fair",
+      "taxIncluded": true,
+      "priceType": "exact",
+      "note": "公式PDFにSSセット税込2,288円と明記。"
+    }
+  ],
+  "rangeItemsExcludedFromOptimization": [
+    {
+      "name": "ランチセット",
+      "priceFrom": 1364,
+      "source": "lunch",
+      "reason": "「1,364円〜」のため選択メイン等で価格が変わる。確定価格として最適化しない。"
+    },
+    {
+      "name": "オムパスタコンビ",
+      "priceFrom": 1408,
+      "source": "lunch",
+      "reason": "「1,408円〜」表記。選択内容で価格変動。"
+    },
+    {
+      "name": "ランチレディースセット",
+      "priceFrom": 1760,
+      "source": "grand",
+      "reason": "「1,760円〜」表記。選択メイン等で価格変動。"
+    },
+    {
+      "name": "ディナーレディースセット",
+      "priceFrom": 1925,
+      "source": "grand",
+      "reason": "「1,925円〜」表記。選択メイン等で価格変動。"
+    },
+    {
+      "name": "単品ドリンクのフロート化",
+      "delta": 55,
+      "source": "grand",
+      "reason": "+55円自体は現行公式確認済みだが、単品ドリンク本体の現行全価格が公式Webで網羅公開されていない。"
+    }
+  ],
+  "facilityOfficialEvidence": [
+    {
+      "facility": "KITTE博多",
+      "store": "ポムの樹 9F",
+      "status": "facility-official-current",
+      "sources": [
+        {
+          "url": "https://hakata.jp-kitte.jp/shop/item_news.jsp?id=4020&inc=0&shopid=90400",
+          "title": "お得なランチセットがリニューアル",
+          "published": "2026-05-01"
+        },
+        {
+          "url": "https://hakata.jp-kitte.jp/shop/item_news.jsp?id=4065&inc=0&shopid=90400",
+          "title": "夏のチーズフェス",
+          "published": "2026-06-30"
+        }
+      ],
+      "evidence": [
+        {
+          "item": "野菜のトマトソースオムライス SS",
+          "price": 1089,
+          "context": "lunch-single"
+        },
+        {
+          "item": "野菜のトマトソースオムライス ランチセット",
+          "price": 1474,
+          "context": "lunch-set"
+        },
+        {
+          "item": "バジルクリームオムライス SS",
+          "price": 1089,
+          "context": "lunch-single"
+        },
+        {
+          "item": "バジルクリームオムライス ランチセット",
+          "price": 1474,
+          "context": "lunch-set"
+        },
+        {
+          "item": "エビとベーコンのオイルスパゲティ",
+          "price": 1089,
+          "context": "lunch-single"
+        },
+        {
+          "item": "エビとベーコンのオイルスパゲティ ランチセット",
+          "price": 1474,
+          "context": "lunch-set"
+        },
+        {
+          "item": "夏フェアセット追加料金",
+          "price": 770,
+          "context": "fair-set-delta"
+        }
+      ],
+      "note": "施設公式の店舗固有情報。全国参考プロファイルへ混ぜない。ランチは同記事で17時までと明記。"
+    },
+    {
+      "facility": "ヨドバシAkiba",
+      "store": "ポムの樹 ヨドバシAkiba店",
+      "status": "facility-official-current",
+      "url": "https://www.yodobashi-akiba.com/restaurant/yy_pomu.html",
+      "evidence": [
+        {
+          "item": "定番オムライス（チキン入り）SS",
+          "price": 1100,
+          "category": "omurice"
+        },
+        {
+          "item": "モッツァレラチーズのトマトソースオムライス（ストラッチャテッラのせ）SS",
+          "price": 1155,
+          "category": "omurice"
+        },
+        {
+          "item": "特製デミソースのダブルチーズオムライス SS",
+          "price": 1210,
+          "category": "omurice"
+        },
+        {
+          "item": "プレミアムビーフシチューオムライス SS",
+          "price": 2453,
+          "category": "omurice"
+        },
+        {
+          "item": "エビとキノコとほうれん草のクリームソースオムライス SS",
+          "price": 1408,
+          "category": "omurice"
+        },
+        {
+          "item": "とろろ明太子といろいろキノコのオムライス SS",
+          "price": 1078,
+          "category": "omurice"
+        },
+        {
+          "item": "カニクリームコロッケのハヤシソースオムライス SS",
+          "price": 1353,
+          "category": "omurice"
+        },
+        {
+          "item": "明太子クリームスパゲティ",
+          "price": 1177,
+          "category": "pasta"
+        },
+        {
+          "item": "温玉カルボナーラ",
+          "price": 1188,
+          "category": "pasta"
+        },
+        {
+          "item": "オムライスドリア",
+          "price": 1298,
+          "category": "doria"
+        },
+        {
+          "item": "お子様オムライスセット",
+          "price": 781,
+          "category": "kids"
+        }
+      ],
+      "note": "施設公式。サイズアップ可能商品ありと明記されるが差額非公開。その他サイドメニューもあるが価格非公開。全国参考プロファイルへ混ぜない。"
+    }
+  ],
+  "historicalEvidenceNotForCurrentPricing": [
+    {
+      "rule": "ランチSS→SサイズUP +165円",
+      "sourceUrl": "https://www.pomunoki.com/img/release/release-265.pdf",
+      "published": "2025-03-01",
+      "status": "historical-only",
+      "note": "2025年公式ランチ資料では明記。2026年3月改定資料では同記載を確認できないため、現行全国ルールに自動適用禁止。"
+    },
+    {
+      "rule": "SS/S/M/Lの量目説明",
+      "sourceUrl": "https://pomunoki.com/news/2019/10/post-218.html",
+      "published": "2019-10-31",
+      "status": "official-faq-background",
+      "note": "サイズ概念の説明として利用可。価格差の根拠には利用禁止。"
+    }
+  ],
+  "dataTrust": {
+    "defaultOptimizationStatuses": [
+      "official-current"
+    ],
+    "futureActivation": "start date reached in Asia/Tokyo",
+    "facilityPolicy": "store profile only; never merge into default nationwide/reference profile",
+    "unknownPricePolicy": "never infer or interpolate",
+    "webCoverageLimit": "公式はWeb掲載が全商品ではないと明記",
+    "defaultProfileName": "公式Web参考価格（非公式ツール）",
+    "lunchPolicy": "menuContext=lunch はユーザーがランチを明示した場合のみ候補化。通常モードに混ぜない。",
+    "fairFreshnessPolicy": "reviewAfter到達後、再確認できるまで該当フェア商品を既定計算から除外する。終了日を推測しない。",
+    "bundlePolicy": "公式PDFで一点の税込セット価格が確認できるものは1つの購入オファーとして登録可。内容を推測して分解しない。",
+    "affiliationPolicy": "非公式・参考ツールであることをファーストビューに明示。ロゴ等で公式と誤認させない。"
+  },
+  "coverage": {
+    "officialSiteStatement": "公式Webは一部メニューのみ掲載で全商品ではない。",
+    "grandMenuClaim": "公式ブランドページは約40種類のオムライス提供と説明するが、価格付きWeb公開は一部。",
+    "optimizerScope": "一点の税込価格を一次情報で確認でき、かつコンテキスト・鮮度条件を満たす項目のみ。"
+  }
+}
