@@ -184,4 +184,72 @@ describe('App', () => {
     expect(document.body).not.toHaveTextContent('この金額で応募できます')
     expect(document.body).not.toHaveTextContent('店舗共通価格')
   })
+
+  it('scrolls to the rendered fixed result after adding a product on mobile', () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      matches: query === '(max-width: 979px)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }))
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView })
+
+    render(<App />)
+    fireEvent.change(screen.getByRole('searchbox', { name: '商品名検索' }), { target: { value: '海鮮あん' } })
+    fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
+
+    expect(screen.getByText('647円')).toBeVisible()
+    expect(screen.getByRole('heading', { name: '最小追加のおすすめ' })).toBeVisible()
+    expect(screen.getByText('超過 +2円')).toBeVisible()
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' })
+    expect(scrollIntoView.mock.instances[0]).toHaveClass('fixed-results')
+  })
+
+  it('does not auto-scroll after adding a product on desktop', () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      matches: query === '(min-width: 980px)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }))
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView })
+
+    render(<App />)
+    fireEvent.change(screen.getByRole('searchbox', { name: '商品名検索' }), { target: { value: '海鮮あん' } })
+    fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
+
+    expect(screen.getByRole('heading', { name: '最小追加のおすすめ' })).toBeVisible()
+    expect(scrollIntoView).not.toHaveBeenCalled()
+  })
+
+  it('uses instant result scrolling when reduced motion is preferred', () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      matches: query === '(max-width: 979px)' || query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }))
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView })
+
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: '仮ドリンクを追加' }))
+
+    expect(screen.getByRole('heading', { name: '最小追加のおすすめ' })).toBeVisible()
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' })
+  })
 })

@@ -434,6 +434,10 @@ main { max-width: 1240px; margin: 0 auto; padding: 20px; }
 .empty-state p { margin: 8px auto 0; max-width: 520px; color: var(--muted); font-size: 13px; line-height: 1.7; }
 footer { padding: 25px 20px 40px; color: var(--muted); text-align: center; font-size: 11px; }
 
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
 @media (max-width: 979px) {
   .header-inner { padding: 18px 15px 13px; align-items: flex-start; flex-direction: column; gap: 10px; }
   .header-inner p { min-height: 34px; padding: 0 12px; font-size: 12px; }
@@ -442,7 +446,7 @@ footer { padding: 25px 20px 40px; color: var(--muted); text-align: center; font-
   .app-grid { grid-template-columns: 1fr; }
   .primary-column, .side-column { display: contents; }
   .wanted-finder { order: 1; }
-  .fixed-results { order: 2; }
+  .fixed-results { order: 2; scroll-margin-top: 96px; }
   .auxiliary-explorer { order: 3; }
   .advanced-panel { order: 4; }
   .trust-panel { order: 5; }

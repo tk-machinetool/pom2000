@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import rawData from '../handoff/menu-data.json'
 import { AdvancedFilters } from './components/AdvancedFilters'
 import { BestResult } from './components/BestResult'
@@ -34,6 +34,8 @@ function App() {
   const [floatEnabled, setFloatEnabled] = useState(false)
   const [now] = useState(() => new Date())
   const [desktopDefault] = useState(() => window.matchMedia('(min-width: 980px)').matches)
+  const fixedResultsRef = useRef<HTMLDivElement>(null)
+  const shouldScrollToFixedResultsRef = useRef(false)
 
   const baskets = useMemo(
     () => optimize(data, { preset, filters, maxQuantityPerOffer: 2, maxTotalUnits: 4, limit: 20 }, now),
@@ -72,6 +74,24 @@ function App() {
   )
   const hasSelection = selectedLines.length > 0
 
+  const updateFixedQuantities = (next: FixedQuantities) => {
+    shouldScrollToFixedResultsRef.current = Object.entries(next).some(
+      ([id, quantity]) => quantity > 0 && (fixedQuantities[id] ?? 0) === 0,
+    )
+    setFixedQuantities(next)
+  }
+
+  useEffect(() => {
+    if (!shouldScrollToFixedResultsRef.current || !hasSelection || !fixedBaskets[0]) return
+    shouldScrollToFixedResultsRef.current = false
+    if (!window.matchMedia('(max-width: 979px)').matches) return
+
+    fixedResultsRef.current?.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      block: 'start',
+    })
+  }, [fixedBaskets, hasSelection])
+
   const updateFilters = (next: SearchFilters) => {
     if (filters.includeLunch && !next.includeLunch) {
       setFixedQuantities((current) => Object.fromEntries(Object.entries(current).filter(([id]) => data.menu.find((offer) => offer.id === id)?.menuContext !== 'lunch')))
@@ -106,7 +126,7 @@ function App() {
               simulationOffer={simulationDrink}
               onSimulationPriceChange={setSimulationDrinkPrice}
               fixedQuantities={fixedQuantities}
-              onChange={setFixedQuantities}
+              onChange={updateFixedQuantities}
               floatEnabled={floatEnabled}
               onFloatChange={setFloatEnabled}
               maxQuantityPerOffer={2}
@@ -114,7 +134,7 @@ function App() {
             />
 
             {hasSelection ? (
-              <div className="fixed-results" aria-live="polite">
+              <div ref={fixedResultsRef} className="fixed-results" aria-live="polite">
                 <section className={selectedHasOmurice ? 'target-status' : 'target-status needs-omurice'}>
                   {selectedTotal < data.targetYen ? (
                     <p>2,000円まであと{selectedHasHypotheticalPrice ? '（見込み）' : ''} <strong>{data.targetYen - selectedTotal}円</strong></p>
