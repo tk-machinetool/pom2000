@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import rawData from '../handoff/menu-data.json'
+import { overageBand, trackAnalyticsEvent } from './analytics'
 import { AdvancedFilters } from './components/AdvancedFilters'
 import { BestResult } from './components/BestResult'
 import { DataTrustNotice } from './components/DataTrustNotice'
@@ -41,6 +42,7 @@ function App() {
   const [desktopDefault] = useState(() => window.matchMedia('(min-width: 980px)').matches)
   const fixedResultsRef = useRef<HTMLDivElement>(null)
   const shouldScrollToFixedResultsRef = useRef(false)
+  const targetReachedRef = useRef(false)
 
   const baskets = useMemo(
     () => optimize(data, { preset, filters, maxQuantityPerOffer: 2, maxTotalUnits: 4, limit: 20 }, now),
@@ -87,10 +89,21 @@ function App() {
   )
   const hasSelection = selectedLines.length > 0
 
-  const updateFixedQuantities = (next: FixedQuantities) => {
+  const updateFixedQuantities = (next: FixedQuantities, source: 'product' | 'candidate' = 'product') => {
     shouldScrollToFixedResultsRef.current = Object.entries(next).some(
       ([id, quantity]) => quantity > 0 && (fixedQuantities[id] ?? 0) === 0,
     )
+    if (source === 'product') {
+      Object.entries(next).forEach(([id, quantity]) => {
+        if (quantity <= 0 || (fixedQuantities[id] ?? 0) > 0) return
+        const offer = fixedOfferById.get(id)
+        if (!offer) return
+        trackAnalyticsEvent('pom_product_select', {
+          category: offer.category,
+          price_basis: priceBasisOf(offer),
+        })
+      })
+    }
     setFixedQuantities(next)
   }
 
@@ -104,6 +117,16 @@ function App() {
       block: 'start',
     })
   }, [fixedBaskets, hasSelection])
+
+  useEffect(() => {
+    const reached = selectedTotal >= data.targetYen && selectedHasOmurice
+    if (reached && !targetReachedRef.current) {
+      trackAnalyticsEvent('pom_target_reached', {
+        overage_band: overageBand(selectedTotal - data.targetYen),
+      })
+    }
+    targetReachedRef.current = reached
+  }, [selectedHasOmurice, selectedTotal])
 
   const updateFilters = (next: SearchFilters) => {
     if (filters.includeLunch && !next.includeLunch) {
@@ -124,7 +147,14 @@ function App() {
           <p>非公式・参考ツール</p>
         </div>
       </header>
-      <ExploreModeSwitch value={exploreMode} onChange={setExploreMode} />
+      <ExploreModeSwitch
+        value={exploreMode}
+        onChange={(mode) => {
+          if (mode === exploreMode) return
+          setExploreMode(mode)
+          trackAnalyticsEvent('pom_mode_change', { mode: mode === 'wanted' ? 'finder' : 'condition' })
+        }}
+      />
       <div className="price-basis-guide" aria-label="価格表示の区分">
         <div><strong>公式掲載参考価格</strong><span>公式Web確認・店舗差あり</span></div>
         <div><strong>店頭メニュー参考価格</strong><span>2026年写真確認・店舗差あり</span></div>
@@ -182,7 +212,16 @@ function App() {
                       selectedLines={selectedBasketLines}
                       targetYen={data.targetYen}
                       canAdd={selectedUnitCount < 4}
-                      onAdd={(offerId) => updateFixedQuantities({ ...fixedQuantities, [offerId]: 1 })}
+                      onAdd={(offerId) => {
+                        const offer = fixedOfferById.get(offerId)
+                        if (offer) {
+                          trackAnalyticsEvent('pom_candidate_add', {
+                            category: offer.category,
+                            price_basis: priceBasisOf(offer),
+                          })
+                        }
+                        updateFixedQuantities({ ...fixedQuantities, [offerId]: 1 }, 'candidate')
+                      }}
                     />
                   ) : null}
                   {fixedOrderNeedsNoAddition ? (
@@ -218,7 +257,14 @@ function App() {
                 <h2 id="auxiliary-heading">条件から探す</h2>
                 <p>商品を決めていないときの補助機能です</p>
               </div>
-              <PresetSelector value={preset} onChange={setPreset} />
+              <PresetSelector
+                value={preset}
+                onChange={(nextPreset) => {
+                  if (nextPreset === preset) return
+                  setPreset(nextPreset)
+                  trackAnalyticsEvent('pom_preset_select', { preset: nextPreset })
+                }}
+              />
               {baskets[0] ? (
                 <>
                   <BestResult basket={baskets[0]} preset={preset} presetLabel={PRESET_LABELS[preset]} sources={data.sources} asOf={data.asOf} />
@@ -238,7 +284,10 @@ function App() {
           </aside>
         </div>
       </main>
-      <footer>非公式の参考ツールです。データ基準日：{data.asOf}</footer>
+      <footer>
+        <span>非公式の参考ツールです。データ基準日：{data.asOf}</span>
+        <small>利用状況の把握・改善のため、Google Analyticsによるアクセス解析を使用しています。</small>
+      </footer>
     </>
   )
 }

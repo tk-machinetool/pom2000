@@ -1,9 +1,18 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
+import { trackAnalyticsEvent } from './analytics'
+
+vi.mock('./analytics', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./analytics')>()
+  return { ...original, trackAnalyticsEvent: vi.fn() }
+})
+
+const analyticsMock = vi.mocked(trackAnalyticsEvent)
 
 describe('App', () => {
   beforeEach(() => {
+    analyticsMock.mockClear()
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-09-05T12:00:00+09:00'))
   })
@@ -411,5 +420,63 @@ describe('App', () => {
     expect(additions).toHaveTextContent('店舗差あり')
     expect(additions).toHaveTextContent('仮ドリンク（参考400円）')
     expect(additions).toHaveTextContent('仮価格')
+  })
+
+  it('tracks finder and condition mode changes once per operation', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('tab', { name: /^食べたいものから探す$/ }))
+    expect(analyticsMock.mock.calls.filter(([name]) => name === 'pom_mode_change')).toHaveLength(0)
+    fireEvent.click(screen.getByRole('tab', { name: /^条件から探す$/ }))
+    expect(analyticsMock).toHaveBeenCalledWith('pom_mode_change', { mode: 'condition' })
+    expect(analyticsMock.mock.calls.filter(([name]) => name === 'pom_mode_change')).toHaveLength(1)
+  })
+
+  it('tracks a product selection with category and price basis but no product name', () => {
+    render(<App />)
+    fireEvent.change(screen.getByRole('searchbox', { name: '商品名検索' }), { target: { value: '海鮮あん' } })
+    fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
+
+    expect(analyticsMock).toHaveBeenCalledWith('pom_product_select', {
+      category: 'omurice',
+      price_basis: 'official-reference',
+    })
+    expect(JSON.stringify(analyticsMock.mock.calls)).not.toContain('海鮮あんかけ')
+  })
+
+  it('tracks a one-item candidate addition without duplicating product selection', () => {
+    render(<App />)
+    fireEvent.change(screen.getByRole('searchbox', { name: '商品名検索' }), { target: { value: '海鮮あん' } })
+    fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
+    analyticsMock.mockClear()
+
+    fireEvent.click(within(screen.getByRole('region', { name: '1品追加で近い候補' })).getByRole('button', { name: 'じゃがいもフライ＆さつまいもフライを追加する' }))
+
+    expect(analyticsMock).toHaveBeenCalledWith('pom_candidate_add', {
+      category: 'side',
+      price_basis: 'store-reference',
+    })
+    expect(analyticsMock.mock.calls.filter(([name]) => name === 'pom_product_select')).toHaveLength(0)
+    expect(analyticsMock.mock.calls.filter(([name]) => name === 'pom_candidate_add')).toHaveLength(1)
+  })
+
+  it('tracks preset selection once with the preset id', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('tab', { name: /^条件から探す$/ }))
+    analyticsMock.mockClear()
+    fireEvent.click(screen.getByRole('radio', { name: /軽めに2,000円/ }))
+
+    expect(analyticsMock).toHaveBeenCalledWith('pom_preset_select', { preset: 'light' })
+    expect(analyticsMock.mock.calls.filter(([name]) => name === 'pom_preset_select')).toHaveLength(1)
+  })
+
+  it('tracks target reached once and does not resend while the order remains over target', () => {
+    render(<App />)
+    fireEvent.change(screen.getByRole('searchbox', { name: '商品名検索' }), { target: { value: '海鮮あん' } })
+    fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
+    fireEvent.click(within(screen.getByRole('region', { name: '1品追加で近い候補' })).getByRole('button', { name: 'じゃがいもフライ＆さつまいもフライを追加する' }))
+
+    expect(analyticsMock).toHaveBeenCalledWith('pom_target_reached', { overage_band: '0-20' })
+    fireEvent.click(screen.getByRole('button', { name: 'じゃがいもフライ＆さつまいもフライを1つ増やす' }))
+    expect(analyticsMock.mock.calls.filter(([name]) => name === 'pom_target_reached')).toHaveLength(1)
   })
 })

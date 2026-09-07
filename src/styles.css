@@ -26,6 +26,8 @@ button, input, summary { font: inherit; }
 button, summary, a { -webkit-tap-highlight-color: transparent; }
 button { color: inherit; }
 a { color: inherit; }
+
+footer small { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .sr-only {
   position: absolute;
   width: 1px;
