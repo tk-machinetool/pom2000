@@ -86,6 +86,18 @@ export interface Basket {
   fixedQuantities?: Record<string, number>
 }
 
+export interface SingleAdditionCandidate {
+  offer: MenuOffer
+  total: number
+  difference: number
+  reachesTarget: boolean
+}
+
+export interface SingleAdditionGroups {
+  reachesTarget: SingleAdditionCandidate[]
+  belowTarget: SingleAdditionCandidate[]
+}
+
 export interface SearchOptions {
   preset: Preset
   filters: SearchFilters

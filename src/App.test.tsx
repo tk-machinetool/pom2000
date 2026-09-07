@@ -18,6 +18,8 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: '食べたいものから探す' })).toBeVisible()
     expect(screen.getByRole('searchbox', { name: '商品名検索' })).toBeVisible()
     expect(screen.getByRole('heading', { name: '選択中の商品' })).toBeVisible()
+    expect(screen.getByRole('tab', { name: /^食べたいものから探す$/ })).toHaveAttribute('aria-selected', 'true')
+    fireEvent.click(screen.getByRole('tab', { name: /^条件から探す$/ }))
     expect(screen.getByRole('radio', { name: /1人向け/ })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getAllByText('2,013円').length).toBeGreaterThan(0)
     expect(screen.getAllByText('+13円').length).toBeGreaterThan(0)
@@ -93,6 +95,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
 
     expect(screen.getByText('647円')).toBeVisible()
+    expect(screen.getByRole('heading', { name: '現在の選択状況' })).toBeVisible()
     expect(screen.getByRole('heading', { name: '最小追加のおすすめ' })).toBeVisible()
     expect(screen.getAllByText('2,013円').length).toBeGreaterThan(0)
     expect(screen.getByText('超過 +2円')).toBeVisible()
@@ -256,6 +259,7 @@ describe('App', () => {
 
   it('selects the light preset with its non-quantitative explanation', () => {
     render(<App />)
+    fireEvent.click(screen.getByRole('tab', { name: /^条件から探す$/ }))
     const light = screen.getByRole('radio', { name: /軽めに2,000円/ })
     fireEvent.click(light)
 
@@ -287,5 +291,125 @@ describe('App', () => {
 
     expect(screen.getByRole('heading', { name: '2,000円に近い実用的な組み合わせが見つかりません' })).toBeVisible()
     expect(screen.queryByRole('heading', { name: '最小追加のおすすめ' })).not.toBeInTheDocument()
+  })
+
+  it('starts in wanted mode and switches to the condition presets without scrolling the product list', () => {
+    render(<App />)
+    const wantedTab = screen.getByRole('tab', { name: /^食べたいものから探す$/ })
+    const conditionsTab = screen.getByRole('tab', { name: /^条件から探す$/ })
+
+    expect(wantedTab).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tabpanel', { name: '食べたいものから探す' })).toBeVisible()
+    fireEvent.click(conditionsTab)
+
+    expect(conditionsTab).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tabpanel', { name: '条件から探す' })).toBeVisible()
+    expect(screen.getByRole('radio', { name: /1人向け/ })).toBeVisible()
+    expect(screen.getByRole('radio', { name: /2人向け/ })).toBeVisible()
+    expect(screen.getByRole('radio', { name: /軽めに2,000円/ })).toBeVisible()
+    expect(screen.getByRole('radio', { name: /金額最優先/ })).toBeVisible()
+    expect(screen.queryByRole('searchbox', { name: '商品名検索' })).not.toBeInTheDocument()
+
+    fireEvent.click(wantedTab)
+    expect(screen.getByRole('searchbox', { name: '商品名検索' })).toBeVisible()
+  })
+
+  it('supports arrow-key operation in the explore-mode tabs', () => {
+    render(<App />)
+    const wantedTab = screen.getByRole('tab', { name: /^食べたいものから探す$/ })
+    fireEvent.keyDown(wantedTab, { key: 'ArrowRight' })
+    expect(screen.getByRole('tab', { name: /^条件から探す$/ })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('preserves fixed products and the product search while switching modes', () => {
+    render(<App />)
+    const search = screen.getByRole('searchbox', { name: '商品名検索' })
+    fireEvent.change(search, { target: { value: '海鮮あん' } })
+    fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
+    fireEvent.click(screen.getByRole('tab', { name: /^条件から探す$/ }))
+    fireEvent.click(screen.getByRole('tab', { name: /^食べたいものから探す$/ }))
+
+    expect(screen.getByRole('searchbox', { name: '商品名検索' })).toHaveValue('海鮮あん')
+    expect(screen.getByRole('button', { name: '海鮮あんかけオムライスを解除' })).toBeVisible()
+  })
+
+  it('preserves the hypothetical drink and its edited price while switching modes', () => {
+    render(<App />)
+    fireEvent.change(screen.getByRole('spinbutton', { name: '仮ドリンクの税込参考価格' }), { target: { value: '450' } })
+    fireEvent.click(screen.getByRole('button', { name: '仮ドリンクを追加' }))
+    fireEvent.click(screen.getByRole('tab', { name: /^条件から探す$/ }))
+    fireEvent.click(screen.getByRole('tab', { name: /^食べたいものから探す$/ }))
+
+    expect(screen.getByRole('spinbutton', { name: '仮ドリンクの税込参考価格' })).toHaveValue(450)
+    expect(screen.getByRole('button', { name: '仮ドリンク（参考450円）を解除' })).toBeVisible()
+  })
+
+  it('shows practical one-item additions in the requested result order', () => {
+    render(<App />)
+    fireEvent.change(screen.getByRole('searchbox', { name: '商品名検索' }), { target: { value: '海鮮あん' } })
+    fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
+
+    const additions = screen.getByRole('region', { name: '1品追加で近い候補' })
+    const reaches = within(additions).getByRole('region', { name: '1品追加で2,000円以上' })
+    const rows = within(reaches).getAllByRole('listitem')
+    expect(rows[0]).toHaveTextContent('じゃがいもフライ＆さつまいもフライ')
+    expect(rows[0]).toHaveTextContent('2,002円')
+    expect(rows[0]).toHaveTextContent('+2円')
+    expect(rows[1]).toHaveTextContent('うじゃうじゃウインナー')
+    expect(additions).not.toHaveTextContent('単品ライス')
+    expect(additions).not.toHaveTextContent('パン')
+    expect(additions).not.toHaveTextContent('パスタ')
+    expect(additions).not.toHaveTextContent('ドリア')
+  })
+
+  it('orders below-target one-item additions by the smallest remaining amount', () => {
+    render(<App />)
+    fireEvent.change(screen.getByRole('searchbox', { name: '商品名検索' }), { target: { value: '海鮮あん' } })
+    fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
+
+    const additions = screen.getByRole('region', { name: '1品追加で近い候補' })
+    const below = within(additions).getByRole('region', { name: 'まだ2,000円未満' })
+    const remaining = within(below).getAllByRole('listitem').map((row) => {
+      const text = row.textContent ?? ''
+      return Number(text.match(/あと(?:（見込み）)?([\d,]+)円/)?.[1].replace(',', ''))
+    })
+    expect(remaining).toEqual(remaining.toSorted((left, right) => left - right))
+  })
+
+  it('adds a one-item candidate to the fixed order and recalculates the result', () => {
+    render(<App />)
+    fireEvent.change(screen.getByRole('searchbox', { name: '商品名検索' }), { target: { value: '海鮮あん' } })
+    fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
+    const additions = screen.getByRole('region', { name: '1品追加で近い候補' })
+    fireEvent.click(within(additions).getByRole('button', { name: 'あまおうジェラートを追加する' }))
+
+    expect(screen.getByRole('button', { name: 'あまおうジェラートを解除' })).toBeVisible()
+    expect(screen.getByText('152円')).toBeVisible()
+    const recalculated = screen.getByRole('region', { name: '1品追加で近い候補' })
+    expect(within(recalculated).queryByRole('button', { name: 'あまおうジェラートを追加する' })).not.toBeInTheDocument()
+  })
+
+  it('hides one-item additions after the fixed order reaches 2,000 yen', () => {
+    render(<App />)
+    fireEvent.change(screen.getByRole('searchbox', { name: '商品名検索' }), { target: { value: '海鮮あん' } })
+    fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
+    fireEvent.click(within(screen.getByRole('region', { name: '1品追加で近い候補' })).getByRole('button', { name: 'じゃがいもフライ＆さつまいもフライを追加する' }))
+
+    expect(screen.getByRole('heading', { name: '追加注文は不要です' })).toBeVisible()
+    expect(screen.queryByRole('region', { name: '1品追加で近い候補' })).not.toBeInTheDocument()
+  })
+
+  it('keeps official, store-reference, and hypothetical price labels in one-item additions', () => {
+    render(<App />)
+    fireEvent.change(screen.getByRole('searchbox', { name: '商品名検索' }), { target: { value: '海鮮あん' } })
+    fireEvent.click(screen.getByRole('button', { name: '海鮮あんかけオムライス SSを選択' }))
+    const additions = screen.getByRole('region', { name: '1品追加で近い候補' })
+    fireEvent.click(within(additions).getByRole('button', { name: /もっと見る/ }))
+
+    expect(additions).toHaveTextContent('公式掲載参考価格')
+    expect(additions).toHaveTextContent('2026店頭メニュー参考価格')
+    expect(additions).toHaveTextContent('店舗差あり')
+    expect(additions).toHaveTextContent('仮ドリンク（参考400円）')
+    expect(additions).toHaveTextContent('仮価格')
   })
 })

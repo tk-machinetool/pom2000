@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import rawData from '../../handoff/menu-data.json'
 import { mergeMenuData } from './menuMerge'
-import { practicalRecommendationLabel, recommendationRoleOf } from './recommendation'
-import type { MenuData, RecommendationRole } from './types'
+import { practicalRecommendationLabel, recommendationRoleOf, singleAdditionCandidates } from './recommendation'
+import type { BasketLine, MenuData, MenuOffer, RecommendationRole } from './types'
 
 const mergedData = mergeMenuData(rawData as MenuData)
 
@@ -34,5 +34,27 @@ describe('recommendation-only classification', () => {
     expect(practicalRecommendationLabel(101)).toBe('近い参考候補')
     expect(practicalRecommendationLabel(200)).toBe('近い参考候補')
     expect(practicalRecommendationLabel(201)).toBe('2,000円に近い実用的な組み合わせが見つかりません')
+  })
+
+  it('sorts single additions within the over-target and below-target groups', () => {
+    const createOffer = (id: string, name: string, price: number, category: string, containsOmurice = false): MenuOffer => ({
+      id, name, price, category, containsOmurice, source: 'test', status: 'official-current', taxIncluded: true,
+      priceType: 'exact', menuContext: 'grand',
+    })
+    const selected: BasketLine[] = [{ offer: createOffer('selected', '選択オムライス', 1353, 'omurice', true), quantity: 1 }]
+    const offers = [
+      createOffer('over-13', 'サイド660', 660, 'side'),
+      createOffer('under-251', 'ドリンク396', 396, 'drink'),
+      createOffer('over-2', 'サイド649', 649, 'side'),
+      createOffer('under-152', 'デザート495', 495, 'dessert'),
+      createOffer('pasta', '追加パスタ', 650, 'pasta'),
+      createOffer('another-main', '別オムライス', 700, 'omurice', true),
+      createOffer('ref_rice_single', '単品ライス', 200, 'other'),
+      selected[0].offer,
+    ]
+
+    const result = singleAdditionCandidates(offers, selected, 2000)
+    expect(result.reachesTarget.map((candidate) => candidate.offer.id)).toEqual(['over-2', 'over-13'])
+    expect(result.belowTarget.map((candidate) => candidate.offer.id)).toEqual(['under-152', 'under-251'])
   })
 })

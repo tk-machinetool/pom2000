@@ -3,15 +3,18 @@ import rawData from '../handoff/menu-data.json'
 import { AdvancedFilters } from './components/AdvancedFilters'
 import { BestResult } from './components/BestResult'
 import { DataTrustNotice } from './components/DataTrustNotice'
+import { ExploreModeSwitch, type ExploreMode } from './components/ExploreModeSwitch'
 import { FixedRecommendation } from './components/FixedRecommendation'
 import { FixedOrderComplete } from './components/FixedOrderComplete'
 import { FixedResultList } from './components/FixedResultList'
 import { PresetSelector } from './components/PresetSelector'
 import { ProductFinder } from './components/ProductFinder'
 import { ResultList } from './components/ResultList'
-import { priceBasisOf } from './domain/format'
+import { SingleAdditionCandidates } from './components/SingleAdditionCandidates'
+import { formatYen, priceBasisOf } from './domain/format'
 import { mergeMenuData } from './domain/menuMerge'
 import { optimize, optimizeWithFixed, selectableOffers } from './domain/optimizer'
+import { singleAdditionCandidates } from './domain/recommendation'
 import { createFloatModifierOffer, createHypotheticalDrinkOffer, FLOAT_MODIFIER_ID, SIMULATION_DRINK_ID } from './domain/simulation'
 import type { FixedQuantities, MenuData, Preset, SearchFilters } from './domain/types'
 
@@ -29,6 +32,7 @@ const PRESET_LABELS: Record<Preset, string> = { solo: '1人向け', pair: '2人�
 
 function App() {
   const [preset, setPreset] = useState<Preset>('solo')
+  const [exploreMode, setExploreMode] = useState<ExploreMode>('wanted')
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS)
   const [fixedQuantities, setFixedQuantities] = useState<FixedQuantities>({})
   const [simulationDrinkPrice, setSimulationDrinkPrice] = useState(400)
@@ -60,7 +64,14 @@ function App() {
   const selectedTotal = selectedLines.reduce((sum, { offer, quantity }) => sum + offer!.price * quantity, 0)
   const selectedHasOmurice = selectedLines.some(({ offer }) => offer!.containsOmurice)
   const selectedHasHypotheticalPrice = selectedLines.some(({ offer }) => priceBasisOf(offer!) === 'hypothetical')
+  const selectedHasStoreReferencePrice = selectedLines.some(({ offer }) => priceBasisOf(offer!) === 'store-reference')
+  const selectedBasketLines = useMemo(() => selectedLines.map(({ offer, quantity }) => ({ offer: offer!, quantity })), [selectedLines])
+  const selectedUnitCount = baseSelectedLines.reduce((sum, line) => sum + line.quantity, 0)
   const fixedOrderNeedsNoAddition = selectedTotal >= data.targetYen && selectedHasOmurice
+  const singleAdditions = useMemo(
+    () => singleAdditionCandidates([...products, simulationDrink], selectedBasketLines, data.targetYen),
+    [products, selectedBasketLines, simulationDrink],
+  )
   const fixedBaskets = useMemo(
     () => optimizeWithFixed(
       data,
@@ -113,6 +124,7 @@ function App() {
           <p>非公式・参考ツール</p>
         </div>
       </header>
+      <ExploreModeSwitch value={exploreMode} onChange={setExploreMode} />
       <div className="price-basis-guide" aria-label="価格表示の区分">
         <div><strong>公式掲載参考価格</strong><span>公式Web確認・店舗差あり</span></div>
         <div><strong>店頭メニュー参考価格</strong><span>2026年写真確認・店舗差あり</span></div>
@@ -123,54 +135,85 @@ function App() {
       <main>
         <div className="app-grid">
           <div className="primary-column">
-            <ProductFinder
-              offers={products}
-              simulationOffer={simulationDrink}
-              onSimulationPriceChange={setSimulationDrinkPrice}
-              fixedQuantities={fixedQuantities}
-              onChange={updateFixedQuantities}
-              floatEnabled={floatEnabled}
-              onFloatChange={setFloatEnabled}
-              maxQuantityPerOffer={2}
-              maxTotalUnits={4}
-            />
+            <section
+              id="wanted-mode-panel"
+              className="mode-panel wanted-mode-panel"
+              role="tabpanel"
+              aria-labelledby="explore-mode-wanted"
+              hidden={exploreMode !== 'wanted'}
+            >
+              <ProductFinder
+                offers={products}
+                simulationOffer={simulationDrink}
+                onSimulationPriceChange={setSimulationDrinkPrice}
+                fixedQuantities={fixedQuantities}
+                onChange={updateFixedQuantities}
+                floatEnabled={floatEnabled}
+                onFloatChange={setFloatEnabled}
+                maxQuantityPerOffer={2}
+                maxTotalUnits={4}
+              />
 
-            {hasSelection ? (
-              <div ref={fixedResultsRef} className="fixed-results" aria-live="polite">
-                <section className={selectedHasOmurice ? 'target-status' : 'target-status needs-omurice'}>
-                  {selectedTotal < data.targetYen ? (
-                    <p>2,000円まであと{selectedHasHypotheticalPrice ? '（見込み）' : ''} <strong>{data.targetYen - selectedTotal}円</strong></p>
-                  ) : selectedHasOmurice ? (
-                    <p className={selectedHasHypotheticalPrice ? 'estimate' : 'achieved'}>{selectedHasHypotheticalPrice ? '仮価格上、2,000円以上の見込み' : '参考価格上、2,000円以上'}</p>
-                  ) : (
-                    <p>{selectedHasHypotheticalPrice ? '仮価格上、2,000円以上の見込みです' : '参考価格上、2,000円以上です'}</p>
-                  )}
-                  {!selectedHasOmurice ? (
-                    <div className="omurice-required">この商品だけではキャンペーン条件を満たしません。<br />オムライスを含む組み合わせを探します。</div>
-                  ) : null}
-                </section>
-                {fixedOrderNeedsNoAddition ? (
-                  <FixedOrderComplete
-                    lines={selectedLines.map(({ offer, quantity }) => ({ offer: offer!, quantity }))}
-                    targetYen={data.targetYen}
-                    sources={data.sources}
-                    asOf={data.asOf}
-                  />
-                ) : fixedBaskets[0] ? (
-                  <>
-                    <FixedRecommendation basket={fixedBaskets[0]} fixedQuantities={effectiveFixedQuantities} sources={data.sources} asOf={data.asOf} />
-                    <FixedResultList key={JSON.stringify(effectiveFixedQuantities)} baskets={fixedBaskets} fixedQuantities={effectiveFixedQuantities} sources={data.sources} asOf={data.asOf} />
-                  </>
-                ) : (
-                  <section className="empty-state">
-                    <h2>追加できる有効な候補がありません</h2>
-                    <p>最大4品・同一商品2個までの範囲と、現在の販売・価格条件を反映しています。</p>
+              {hasSelection ? (
+                <div ref={fixedResultsRef} className="fixed-results" aria-live="polite">
+                  <section className={selectedHasOmurice ? 'target-status' : 'target-status needs-omurice'}>
+                    <div className="current-selection-summary">
+                      <div>
+                        <h3>現在の選択状況</h3>
+                        <p>{selectedBasketLines.map(({ offer, quantity }) => `${offer.name}${offer.size ? ` ${offer.size}` : ''} ×${quantity}`).join('、')}</p>
+                      </div>
+                      <span>{selectedHasHypotheticalPrice ? '予想合計' : selectedHasStoreReferencePrice ? '店頭参考合計' : '参考合計'} <strong>{formatYen(selectedTotal)}</strong></span>
+                    </div>
+                    {selectedTotal < data.targetYen ? (
+                      <p>2,000円まであと{selectedHasHypotheticalPrice ? '（見込み）' : ''} <strong>{data.targetYen - selectedTotal}円</strong></p>
+                    ) : selectedHasOmurice ? (
+                      <p className={selectedHasHypotheticalPrice ? 'estimate' : 'achieved'}>{selectedHasHypotheticalPrice ? '仮価格上、2,000円以上の見込み' : '参考価格上、2,000円以上'}</p>
+                    ) : (
+                      <p>{selectedHasHypotheticalPrice ? '仮価格上、2,000円以上の見込みです' : '参考価格上、2,000円以上です'}</p>
+                    )}
+                    {!selectedHasOmurice ? (
+                      <div className="omurice-required">この商品だけではキャンペーン条件を満たしません。<br />オムライスを含む組み合わせを探します。</div>
+                    ) : null}
                   </section>
-                )}
-              </div>
-            ) : null}
+                  {selectedTotal < data.targetYen ? (
+                    <SingleAdditionCandidates
+                      key={JSON.stringify(effectiveFixedQuantities)}
+                      groups={singleAdditions}
+                      selectedLines={selectedBasketLines}
+                      targetYen={data.targetYen}
+                      canAdd={selectedUnitCount < 4}
+                      onAdd={(offerId) => updateFixedQuantities({ ...fixedQuantities, [offerId]: 1 })}
+                    />
+                  ) : null}
+                  {fixedOrderNeedsNoAddition ? (
+                    <FixedOrderComplete
+                      lines={selectedBasketLines}
+                      targetYen={data.targetYen}
+                      sources={data.sources}
+                      asOf={data.asOf}
+                    />
+                  ) : fixedBaskets[0] ? (
+                    <>
+                      <FixedRecommendation basket={fixedBaskets[0]} fixedQuantities={effectiveFixedQuantities} sources={data.sources} asOf={data.asOf} />
+                      <FixedResultList key={JSON.stringify(effectiveFixedQuantities)} baskets={fixedBaskets} fixedQuantities={effectiveFixedQuantities} sources={data.sources} asOf={data.asOf} />
+                    </>
+                  ) : (
+                    <section className="empty-state">
+                      <h2>追加できる有効な候補がありません</h2>
+                      <p>最大4品・同一商品2個までの範囲と、現在の販売・価格条件を反映しています。</p>
+                    </section>
+                  )}
+                </div>
+              ) : null}
+            </section>
 
-            <section className="auxiliary-explorer" aria-labelledby="auxiliary-heading">
+            <section
+              id="conditions-mode-panel"
+              className="mode-panel auxiliary-explorer"
+              role="tabpanel"
+              aria-labelledby="explore-mode-conditions"
+              hidden={exploreMode !== 'conditions'}
+            >
               <div className="auxiliary-intro">
                 <h2 id="auxiliary-heading">条件から探す</h2>
                 <p>商品を決めていないときの補助機能です</p>

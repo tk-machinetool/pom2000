@@ -1,4 +1,4 @@
-import type { BasketLine, MenuOffer, RecommendationRole } from './types'
+import type { BasketLine, MenuOffer, RecommendationRole, SingleAdditionCandidate, SingleAdditionGroups } from './types'
 
 // UI/optimizer-only roles. These IDs do not change official categories, prices,
 // or campaign eligibility data in the menu source files.
@@ -57,6 +57,44 @@ export function isPracticalFixedAddition(offer: MenuOffer, fixedHasOmurice: bool
   const role = recommendationRoleOf(offer)
   if (PRACTICAL_ADDON_ROLES.has(role)) return true
   return !fixedHasOmurice && role === 'main' && offer.containsOmurice
+}
+
+export function isPracticalSingleAddition(offer: MenuOffer): boolean {
+  return !offer.requiresCategory && PRACTICAL_ADDON_ROLES.has(recommendationRoleOf(offer))
+}
+
+function compareSingleAdditions(left: SingleAdditionCandidate, right: SingleAdditionCandidate): number {
+  return left.difference - right.difference
+    || left.offer.price - right.offer.price
+    || left.offer.id.localeCompare(right.offer.id, 'en')
+}
+
+export function singleAdditionCandidates(
+  offers: MenuOffer[],
+  selectedLines: BasketLine[],
+  targetYen: number,
+): SingleAdditionGroups {
+  const uniqueOffers = offers.filter((offer, index, all) => all.findIndex((candidate) => candidate.id === offer.id) === index)
+  const selectedIds = new Set(selectedLines.map(({ offer }) => offer.id))
+  const selectedGroupIds = new Set(selectedLines.flatMap(({ offer }) => offer.groupId ? [offer.groupId] : []))
+  const selectedNames = new Set(selectedLines.map(({ offer }) => offer.name.normalize('NFKC').toLocaleLowerCase('ja-JP').replace(/\s+/g, '')))
+  const selectedTotal = selectedLines.reduce((sum, line) => sum + line.offer.price * line.quantity, 0)
+  const candidates = uniqueOffers
+    .filter(isPracticalSingleAddition)
+    .filter((offer) => !selectedIds.has(offer.id)
+      && (offer.groupId === undefined || !selectedGroupIds.has(offer.groupId))
+      && !selectedNames.has(offer.name.normalize('NFKC').toLocaleLowerCase('ja-JP').replace(/\s+/g, '')))
+    .filter((offer) => practicalAdditionLinesAreValid([{ offer, quantity: 1 }], selectedLines))
+    .map((offer): SingleAdditionCandidate => {
+      const total = selectedTotal + offer.price
+      const reachesTarget = total >= targetYen
+      return { offer, total, reachesTarget, difference: Math.abs(total - targetYen) }
+    })
+
+  return {
+    reachesTarget: candidates.filter((candidate) => candidate.reachesTarget).toSorted(compareSingleAdditions),
+    belowTarget: candidates.filter((candidate) => !candidate.reachesTarget).toSorted(compareSingleAdditions),
+  }
 }
 
 function addonRoleCounts(lines: BasketLine[]): Map<RecommendationRole, number> {
