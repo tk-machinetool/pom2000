@@ -16,7 +16,25 @@ describe('analytics', () => {
 
     expect(document.head.querySelectorAll(`script[data-pom-ga4="${GA_MEASUREMENT_ID}"]`)).toHaveLength(1)
     expect(window.dataLayer).toHaveLength(2)
-    expect(window.dataLayer?.[1]).toEqual(['config', GA_MEASUREMENT_ID])
+
+    const commands = window.dataLayer ?? []
+    expect(commands.every((command) => Object.prototype.toString.call(command) === '[object Arguments]')).toBe(true)
+    expect(Array.from(commands[0] as IArguments)[0]).toBe('js')
+    expect(Array.from(commands[0] as IArguments)[1]).toBeInstanceOf(Date)
+    expect(Array.from(commands[1] as IArguments)).toEqual(['config', GA_MEASUREMENT_ID])
+    expect(Array.isArray(commands[0])).toBe(false)
+    expect(Array.isArray(commands[1])).toBe(false)
+  })
+
+  it('keeps app initialization safe when the GA4 script cannot be appended', async () => {
+    const { initializeAnalytics } = await import('./analytics')
+    const appendChild = vi.spyOn(document.head, 'appendChild').mockImplementationOnce(() => {
+      throw new Error('blocked')
+    })
+
+    expect(() => initializeAnalytics()).not.toThrow()
+
+    appendChild.mockRestore()
   })
 
   it('does not fail when GA4 has not loaded or its command function throws', async () => {

@@ -11,7 +11,7 @@ export type AnalyticsEventParameters = Record<string, string | number | boolean>
 
 declare global {
   interface Window {
-    dataLayer?: unknown[][]
+    dataLayer?: unknown[]
     gtag?: (...args: unknown[]) => void
   }
 }
@@ -24,10 +24,6 @@ export function initializeAnalytics(): void {
 
   try {
     window.dataLayer = window.dataLayer ?? []
-    window.gtag = window.gtag ?? ((...args: unknown[]) => window.dataLayer?.push(args))
-
-    window.gtag('js', new Date())
-    window.gtag('config', GA_MEASUREMENT_ID)
 
     if (!document.querySelector(`script[data-pom-ga4="${GA_MEASUREMENT_ID}"]`)) {
       const script = document.createElement('script')
@@ -37,6 +33,13 @@ export function initializeAnalytics(): void {
       script.onerror = () => undefined
       document.head.appendChild(script)
     }
+
+    window.gtag = window.gtag ?? function gtag(..._args: unknown[]) {
+      window.dataLayer?.push(arguments)
+    }
+
+    window.gtag('js', new Date())
+    window.gtag('config', GA_MEASUREMENT_ID)
   } catch {
     // Analytics must never prevent the reference checker from rendering or responding.
   }
